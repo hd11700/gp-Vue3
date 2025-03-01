@@ -60,7 +60,15 @@
           <el-input v-model="form.name" />
         </el-form-item>
         <el-form-item label="菜品图片" prop="imageUrl">
-          <el-input v-model="form.imageUrl" placeholder="请输入图片URL" />
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <el-image
+              v-if="form.imageUrl"
+              style="width: 100px; height: 100px"
+              :src="form.imageUrl"
+              fit="cover"
+            />
+            <el-button style="margin-top: 10px;" type="primary" @click="handleUpload">点击上传</el-button>
+          </div>
         </el-form-item>
         <el-form-item label="归属菜系" prop="category">
           <el-select v-model="form.category" placeholder="请选择菜系">
@@ -217,6 +225,17 @@ const submitForm = async () => {
 const handlePageChange = (page) => {
   currentPage.value = page
 }
+
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      form.value.imageUrl = e.target.result; // 更新图片 URL
+    };
+    reader.readAsDataURL(file); // 读取文件为 Data URL
+  }
+};
 </script>
 
 <style scoped>

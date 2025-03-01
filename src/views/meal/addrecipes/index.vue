@@ -13,7 +13,7 @@
             :headers="headers"
             :limit="1"
             :on-success="handleUploadSuccess"
-            :file-list="fileList">
+            :file-list="fileList">·
             <el-button type="primary">点击上传</el-button>
             <template #tip>支持JPG/PNG格式，建议尺寸800x600px[1]()</template>
           </el-upload>
