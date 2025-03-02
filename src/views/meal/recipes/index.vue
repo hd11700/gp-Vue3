@@ -236,6 +236,14 @@ const handleFileChange = (event) => {
     reader.readAsDataURL(file); // 读取文件为 Data URL
   }
 };
+
+const handleUpload = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = handleFileChange;
+  input.click();
+};
 </script>
 
 <style scoped>

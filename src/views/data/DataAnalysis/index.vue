@@ -58,31 +58,19 @@
         </el-col>
       </el-row>
    
-      <!-- 健康指标趋势 -->
-      <el-card header="健康指标趋势分析" style="margin-top:20px">
-        <el-date-picker v-model="dateRange" type="daterange" style="width:300px"/>
-        <div id="trendChart" style="height:350px"></div>
-      </el-card>
 
       <!-- 新增雷达图 -->
       <el-card header="营养素摄入雷达图" style="margin-top:20px">
         <div id="radarChart" style="height:400px"></div>
       </el-card>
 
-      <!-- 散点图 -->
-      <el-card header="运动时间与BMI关系" style="margin-top:20px">
-        <div id="scatterChart" style="height:400px"></div>
-      </el-card>
 
       <!-- 堆叠柱状图 -->
       <el-card header="每日营养素摄入构成" style="margin-top:20px">
         <div id="stackedBarChart" style="height:400px"></div>
       </el-card>
 
-      <!-- 热力图 -->
-      <el-card header="食物营养成分热力图" style="margin-top:20px">
-        <div id="heatmapChart" style="height:400px"></div>
-      </el-card>
+
     </div>
   </template>
   <script>
@@ -144,22 +132,7 @@
           }]
         })
    
-        // 健康趋势分析（折线图）
-        const trendChart = echarts.init(document.getElementById('trendChart')) 
-        trendChart.setOption({ 
-          tooltip: { trigger: 'axis' },
-          xAxis: {
-            type: 'category',
-            data: ['周一','周二','周三','周四','周五','周六','周日']
-          },
-          yAxis: [{ type: 'value', name: '体重(kg)' }],
-          series: [{
-            name: 'BMI指数',
-            type: 'line',
-            data: [21.3,21.5,21.6,21.4,21.2,21.5,21.4],
-            smooth: true 
-          }]
-        })
+
  
   // 新增雷达图初始化 
   const radarChart = echarts.init(document.getElementById('radarChart')) 
@@ -179,24 +152,6 @@
     }]
   })
 
-  // 散点图初始化
-  const scatterChart = echarts.init(document.getElementById('scatterChart'))
-  scatterChart.setOption({
-    tooltip: {},
-    xAxis: {
-      name: '每周运动时间 (分钟)',
-      type: 'value'
-    },
-    yAxis: {
-      name: 'BMI指数',
-      type: 'value'
-    },
-    series: [{
-      symbolSize: 20,
-      data: [[30, 22.5], [60, 21.8], [90, 21.5], [120, 21.2], [150, 20.8]],
-      type: 'scatter'
-    }]
-  })
 
   // 堆叠柱状图初始化
   const stackedBarChart = echarts.init(document.getElementById('stackedBarChart'))
@@ -236,53 +191,12 @@
     ]
   })
 
-  // 热力图初始化
-  const heatmapChart = echarts.init(document.getElementById('heatmapChart'))
+
   const heatmapData = [
     [0, 0, 100], [0, 1, 200], [0, 2, 150],
     [1, 0, 80], [1, 1, 120], [1, 2, 90],
     [2, 0, 60], [2, 1, 100], [2, 2, 70]
   ];
-  heatmapChart.setOption({
-    tooltip: {
-      position: 'top'
-    },
-    grid: {
-      height: '50%',
-      width: '50%',
-      top: '10%'
-    },
-    xAxis: {
-      type: 'category',
-      data: ['食物A', '食物B', '食物C']
-    },
-    yAxis: {
-      type: 'category',
-      data: ['卡路里', '蛋白质', '脂肪']
-    },
-    visualMap: {
-      min: 0,
-      max: 300,
-      calculable: true,
-      orient: 'horizontal',
-      left: 'center',
-      bottom: '15%'
-    },
-    series: [{
-      name: '热力图',
-      type: 'heatmap',
-      data: heatmapData,
-      label: {
-        show: true
-      },
-      emphasis: {
-        itemStyle: {
-          shadowBlur: 10,
-          shadowColor: 'rgba(0, 0, 0, 0.5)'
-        }
-      }
-    }]
-  })
       },
       initExerciseCharts() {
         // 学生运动结构分析（饼图）
