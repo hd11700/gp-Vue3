@@ -74,14 +74,13 @@
           <el-select v-model="form.category" placeholder="请选择菜系">
             <el-option
               v-for="item in cuisines"
-              :key="item"
-              :label="item"
-              :value="item"
-            />
+              :key="item.id"
+              :label="item.name"
+              :value="item.name"/>
           </el-select>
         </el-form-item>
         <el-form-item label="所含热量" prop="calories">
-          <el-input v-model="form.calories" placeholder="请输入热量" />
+          <el-input v-model.number="form.calories" placeholder="请输入热量" />
         </el-form-item>
         <el-form-item label="所需食材" prop="ingredients">
           <el-input v-model="form.ingredients" placeholder="请输入所需食材" />
@@ -143,19 +142,32 @@ const form = ref({
   id: null,
   name: '',
   image: '',
-  cuisine: ''
+  calories: 0,
+  cuisine: '',
+  category_id: '',
+  ingredients: '',
+  effect: '',
+    suitpeople: '',
+    make: ''
 })
 const formRef = ref(null)
 
 // 验证规则
 const rules = {
   name: [{ required: true, message: '请输入菜品名称', trigger: 'blur' }],
-  image: [{ required: true, message: '请输入图片地址', trigger: 'blur' }],
+  imageUrl: [{ required: true, message: '请输入图片地址', trigger: 'blur' }],
   cuisine: [{ required: true, message: '请选择菜系', trigger: 'change' }]
 }
 
 // 菜系列表
-const cuisines = ['川菜', '粤菜', '湘菜', '鲁菜', '浙菜', '苏菜']
+const cuisines = [
+    { id: "1", name: '川菜' },
+    { id: "2", name: '粤菜' },
+    { id: "3", name: '湘菜' },
+    { id: "4", name: '鲁菜' },
+    { id: "5", name: '浙菜' },
+    { id: "6", name: '苏菜' }
+  ]
 
 // 搜索功能
 const searchKeyword = ref('')
@@ -181,10 +193,7 @@ const paginatedRecipes = computed(() => {
 const getRecipes = async () => {
   const res = await axios.get('http://localhost:8080/api/recipes')
   console.log("获取菜谱数据",res.data);
-  recipes.value = res.data.map((item, index) => ({
-    ...item,
-    id: index + 1 // 自增ID
-  }))
+  recipes.value = res.data
 }
 
 // 新增处理
@@ -202,8 +211,14 @@ const handleEdit = (row) => {
 }
 
 // 删除处理
-const handleDelete = (id) => {
+const handleDelete = async (id) => {
   recipes.value = recipes.value.filter(item => item.id !== id)
+  try {
+    // 调用API接口删除数据，URL中包含id
+    await axios.delete(`http://localhost:8080/api/recipes/${id}`)
+  } catch (error) {
+    console.log("删除失败", error);
+  }
 }
 
 // 表单提交
@@ -213,12 +228,28 @@ const submitForm = async () => {
   if (isEdit.value) {
     const index = recipes.value.findIndex(item => item.id === form.value.id)
     recipes.value.splice(index, 1, form.value)
+    try {
+      // 调用API接口提交数据，URL中包含id
+      const putrecipes = await axios.put(`http://localhost:8080/api/recipes/${form.value.id}`, form.value)
+    } catch (error) {
+      console.log("提交失败", error);
+    }
   } else {
     const newId = recipes.value.length ? Math.max(...recipes.value.map(item => item.id)) + 1 : 1
     recipes.value.push({ ...form.value, id: newId })
+    console.log("提交数据",form.value);
+    const selected = cuisines.find(item => item.name === form.value.category);
+    form.value.category_id = selected ? selected.id : '';
+    try {
+      // 调用API接口提交数据
+      const response = await axios.post('http://localhost:8080/api/recipes', form.value)
+      
+    } catch (error) {
+      console.log("提交失败",error);
+    }
   }
-  
   dialogVisible.value = false
+
 }
 
 // 处理页码变化
@@ -230,10 +261,29 @@ const handleFileChange = (event) => {
   const file = event.target.files[0];
   if (file) {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      form.value.imageUrl = e.target.result; // 更新图片 URL
+    reader.readAsArrayBuffer(file);
+    reader.onload = () => {
+      const newFileName = `${form.value.name}.jpg`;
+      const newFile = new File([reader.result], newFileName, { type: file.type });
+
+      const formData = new FormData();
+      formData.append('file', newFile);
+
+      axios.post('http://localhost:8080/uploadimg', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      .then(response => {
+        form.value.imageUrl = `http://localhost:8080/${form.value.name}.jpg`;
+      })
+      .catch(error => {
+        console.error("上传失败", error);
+      });
     };
-    reader.readAsDataURL(file); // 读取文件为 Data URL
+    reader.onerror = () => {
+      console.error('文件读取失败');
+    };
   }
 };
 

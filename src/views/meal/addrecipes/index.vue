@@ -7,15 +7,14 @@
         </el-form-item>
         
         <!-- 图片上传区块 -->
-        <el-form-item label="菜品图片" prop="image">
+        <el-form-item label="菜品图片" prop="imageUrl">
           <el-upload 
-            action="/api/upload"
+            action="http://localhost:8080/uploadimg"
             :headers="headers"
             :limit="1"
-            :on-success="handleUploadSuccess"
-            :file-list="fileList">·
+            :before-upload="beforeUpload"
+            :file-list="fileList">
             <el-button type="primary">点击上传</el-button>
-            <template #tip>支持JPG/PNG格式，建议尺寸800x600px[1]()</template>
           </el-upload>
         </el-form-item>
         
@@ -24,9 +23,9 @@
           <el-select v-model="formData.cuisine" placeholder="请选择菜系">
             <el-option
               v-for="item in cuisines"
-              :key="item"
-              :label="item"
-              :value="item"/>
+              :key="item.id"
+              :label="item.name"
+              :value="item.name"/>
           </el-select>
         </el-form-item>
         
@@ -65,20 +64,28 @@
   
   <script setup>
   import { ref, reactive } from 'vue'
+  import axios from 'axios'
    
   const formData = reactive({
     name: '',
     image: '',
     calories: 0,
     cuisine: '',
+    category_id: '',
     ingredients: '',
     effect: '',
     suitpeople: '',
     make: ''
   })
 
-  // 菜系列表
-const cuisines = ['川菜', '粤菜', '湘菜', '鲁菜', '浙菜', '苏菜']
+  const cuisines = [
+    { id: "1", name: '川菜' },
+    { id: "2", name: '粤菜' },
+    { id: "3", name: '湘菜' },
+    { id: "4", name: '鲁菜' },
+    { id: "5", name: '浙菜' },
+    { id: "6", name: '苏菜' }
+  ]
    
   // 表单验证规则（参考苍穹外卖校验逻辑）
   const rules = {
@@ -94,13 +101,32 @@ const cuisines = ['川菜', '粤菜', '湘菜', '鲁菜', '浙菜', '苏菜']
    
   // 提交逻辑 
   const submitForm = async () => {
+    console.log("提交数据",formData);
+    formData.imageUrl = `http://localhost:8080/${formData.name}.jpg`;
+    const selected = cuisines.find(item => item.name === formData.cuisine);
+    formData.category_id = selected ? selected.id : '';
     try {
-      await formRef.value.validate() 
-      // 调用API接口提交数据（参考私人菜谱APP接口设计）[6]()
-      console.log(' 提交数据:', formData)
-      ElMessage.success(' 提交成功')
+      // 调用API接口提交数据
+      const response = await axios.post('http://localhost:8080/api/recipes', formData)
+      
     } catch (error) {
-      ElMessage.error(' 请完善表单')
+      console.log("提交失败",error);
     }
   }
+
+  const beforeUpload = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = () => {
+        const newFileName = `${formData.name}.jpg`;
+        const newFile = new File([reader.result], newFileName, { type: file.type });
+        resolve(newFile);
+      };
+      reader.onerror = () => {
+        reject(new Error('文件读取失败'));
+      };
+    });
+  };
+
   </script>

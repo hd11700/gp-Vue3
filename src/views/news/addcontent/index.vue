@@ -4,19 +4,15 @@
       <el-input v-model="formData.title"  placeholder="请输入标题" class="title-input" style="margin-bottom: 15px;" />
       
       <!-- 封面图片上传 -->
-      <el-upload 
-        ref="upload"
-        class="cover-upload"
-        action="/api/upload"
-        :on-success="handleCoverSuccess"
-        :show-file-list="false"
-        style="margin-bottom: 15px;"
-      >
-        <img v-if="formData.cover"  :src="formData.cover"  class="cover-preview" />
-        <el-button v-else class="upload-icon" type="default" @click="$refs.upload.$el.click()">
-          <el-icon><Plus /></el-icon> 请上传封面图片 
-        </el-button>
-      </el-upload>
+      <div style="display: flex; flex-direction: column; align-items: left;">
+            <el-image
+              v-if="formData.img"
+              style="width: 100px; height: 100px"
+              :src="formData.img"
+              fit="cover"
+            />
+            <el-button style="margin: 10px 0 20px 0;width: 100px;" type="primary" @click="handleUpload">点击上传封面</el-button>
+          </div>
    
       <!-- 内容编辑区 -->
       <el-input 
@@ -33,32 +29,64 @@
     </div>
   </template>
    
-  <script>
-  export default {
-    data() {
-      return {
-        formData: {
-          title: '',
-          content: '',
-          cover: ''
-        }
+  <script setup>
+  import { ref, computed, onMounted } from 'vue'
+  import { Search, Plus } from '@element-plus/icons-vue'
+  import axios from 'axios'
+  import { ElMessageBox, ElMessage } from 'element-plus'
+  const formData = ref({
+    title: '',
+    content: '',
+    img: ''
+  })
+
+  const submitForm = async () => {
+    try {
+      await axios.post('http://localhost:8080/news', formData.value)
+      ElMessage.success(' 文章发布成功')
+      formData.value = {
+        title: '',
+        content: '',
+        img: ''
       }
-    },
-    methods: {
-      // 封面图片上传成功回调 
-      handleCoverSuccess(response) {
-        this.formData.cover  = response.data.url  
-      },
-      // 提交表单 
-      async submitForm() {
-        try {
-          await this.$axios.post('/api/article',  this.formData) 
-          this.$message.success(' 文章发布成功')
-          this.$router.push('/article/list') 
-        } catch (error) {
-          this.$message.error(' 提交失败：' + error.message) 
-        }
-      }
+    } catch (error) {
+      ElMessage.error(' 提交失败：' + error.message)
     }
   }
+
+  const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onload = () => {
+      const newFileName = `${formData.value.title}.jpg`;
+      const newFile = new File([reader.result], newFileName, { type: file.type });
+      const formData1 = new FormData();
+      formData1.append('file', newFile);
+      axios.post('http://localhost:8080/uploadimg', formData1, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      .then(response => {
+        formData.img = `http://localhost:8080/${newFileName}`;
+      })
+      .catch(error => {
+        console.error("上传失败", error);
+      });
+    };
+    reader.onerror = () => {
+      console.error('文件读取失败');
+    };
+  }
+};
+
+const handleUpload = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = handleFileChange;
+  input.click();
+};
   </script>
